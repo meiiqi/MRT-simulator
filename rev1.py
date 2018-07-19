@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 McGill Rocket Team Flight Simulator
-Authors: Matt Saathoff
+Authors: Matt Saathoff, Mei Qi Tang
 
 Internally, this simulator uses only SI units. When inputting values, it is currently up to the user to make sure
 the units are correct. At some point we should make a GUI that supports unit conversion when inputting values,
@@ -9,9 +9,9 @@ but we should still do all our calculations in SI.
 
 There is still a lot of structure left unmade too, as well as variables which need to be passed between functions.
 I can keep working on that, but at some point I'm not totally sure what each function will need. Also, each
-variable that is passed to a creater function needs to be checked for improper inputs to avoid running into
-python's native exception handeling. I've been doing this with if statements, print statements, and error state
-attributes, but if someone wants convert this to proper try/except statements that would probably be good.
+variable that is passed to a creator function needs to be checked for improper inputs to avoid running into
+python's native exception handling. I've been doing this with if statements, print statements, and error state
+attributes, but if someone wants convert this to proper try/catch exception statements that would probably be good.
 """
 
 #Import Libraries
@@ -19,9 +19,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import IPython.display as IPy
 from math import factorial
+import helper
 
 #A Class for Creating Rocket Objects
-class rocket:
+class Rocket:
     #A Class for Creating Motor Objects
     class Motor:
         #List of Supported Motor Types
@@ -89,39 +90,41 @@ class rocket:
                     return
                 
                 #Check the Volume
-                if type(volume) not in {int, float, np.int32, np.float64} or volume <= 0:
+                if helper.validateNumber(volume):
+                    self.V = volume
+                else:
                     print('Volume must be a number greater than 0')
                     self.error = True
                     return
-                else:
-                    self.V = volume
-                
+
                 #Check/Assign the Propellant Mass
-                if type(propellantMass) not in {int, float, np.int32, np.float64} or propellantMass <= 0:
+                if helper.validateNumber(propellantMass):
+                    self.m = np.array([propellantMass])
+                else:
                     print('Propellent Mass must be a number greater than 0')
                     self.error = True
                     return
-                else:
-                    self.m = np.array([propellantMass])
                 
                 #Check/Assign the Initial Pressure
-                if type(initialPressure) not in {int, float, np.int32, np.float64} or initialPressure <= 0:
+                if helper.validateNumber(initialPressure):
+                    self.P = np.array([initialPressure])
+                else:
                     print('Initial Pressure must be a number greater than 0')
                     self.error = True
                     return
-                else:
-                    self.P = np.array([initialPressure])
                 
                 #Check/Assign the Outlet Diameter
-                if type(outletDiameter) not in {int, float, np.int32, np.float64} or outletDiameter <= 0:
+                if helper.validateNumber(outletDiameter):
+                    self.D = outletDiameter
+                else:
                     print('Outlet Diameter must be a number greater than 0')
                     self.error = True
                     return
-                else:
-                    self.D = outletDiameter
                 
                 #Check/Assign the Pressurant
-                if pressurant not in self.pressurants and type(pressurant) != type(None):
+                if pressurant and pressurant in self.pressurants:
+                    self.pressurant = pressurant
+                else:
                     if type(pressurant) == str:
                         print('Pressurant Not Supported')
                         print('Supported Pressurants: ' + str(self.pressurants))
@@ -129,7 +132,6 @@ class rocket:
                         return
                     elif verbose == True:
                         print('Invalid Pressurant')
-                    pressurant = None
                     self.error = True
                 
                 #Assign the Verbose Attribute
@@ -152,16 +154,16 @@ class rocket:
                 
             
             #Solid Motor Combustion Chamber Model
-            def updateSolid(h):
-                pass
+            def updateSolid(self, h):
+                return None, None
             
             #Hybrid Motor Combustion Chamber Model
-            def updateHybrid(ODot, h):
-                pass
+            def updateHybrid(self, ODot, h):
+                return None, None
             
             #Liquid Motor Combustion Chamber Model
-            def updateLiquid(ODot, FDot, h):
-                pass
+            def updateLiquid(self, ODot, FDot, h):
+                return None, None
         
         #A Class for Creating Nozzle Objects
         class Nozzle:
@@ -175,6 +177,7 @@ class rocket:
                     #Find the Nozzle Key
                     for key in range(len(self.nozzleTypes)):
                         if self.nozzleTypes[key] == nozzleType:
+                            self.key = key
                             break
                 else:
                     print('Nozzle Type Not Supported')
@@ -183,50 +186,49 @@ class rocket:
                     return
                 
                 #Check the Throat Radius
-                if type(throatRadius) not in {int, float, np.int32, np.float64} or throatRadius <= 0:
+                if not helper.validateNumber(throatRadius):
                     print('Throat Radius must be a number greater than 0')
                     self.error = True
                     return
                 
                 #Check the Inlet Radius
-                if type(inletRadius) not in {int, float, np.int32, np.float64} or inletRadius <= throatRadius:
+                if not helper.validateNumber(inletRadius) or inletRadius <= throatRadius:
                     print('Inlet Radius must be a number greater than the Throat Radius')
                     self.error = True
                     return
                 
                 #Check the Area Ratio
-                if type(areaRatio) not in {int, float, np.int32, np.float64} or areaRatio <= 1:
+                if not helper.validateNumber(areaRatio) or areaRatio <= 1:
                     print('Area Ratio must be a number greater than 1')
                     self.error = True
                     return
                 
                 #Check the Outlet Angle
-                if type(outletAngle) not in {int, float, np.int32, np.float64} or outletAngle < 0 or outletAngle > 90:
+                if not helper.validateNumber(outletAngle) or outletAngle < 0 or outletAngle > 90:
                     print('Outlet Angle must be a number between 0 and 90 degrees')
                     self.error = True
                     return
                 
                 #Check k
-                if type(k) not in {int, float, np.int32, np.float64} or k < 1:
+                if not helper.validateNumber(k) or k < 1:
                     print('k must be a number greater than 1')
                     self.error = True
                     return
                 
                 #Check the Molecular Weight
-                if type(molecularWeight) not in {int, float, np.int32, np.float64} or molecularWeight < 0:
+                if not helper.validateNumber(molecularWeight) or molecularWeight < 0:
                     print('Molecular weight must be a number greater than 0')
                     self.error = True
                     return
                 
                 #Check the Efficiancy
-                if type(efficiency) not in {int, float, np.int32, np.float64} or efficiency <= 0 or efficiency > 1:
+                if not helper.validateNumber(efficiency) or efficiency > 1:
                     print('Efficiency must be a number between 0 and 1')
                     self.error = True
                     return
                 
                 #Assign All Attributes
                 self.nozzleType = nozzleType
-                self.key = key
                 self.epsilon = areaRatio
                 self.ri = inletRadius
                 self.rt = throatRadius
@@ -234,7 +236,7 @@ class rocket:
                 self.theta = outletAngle
                 self.k = k
                 self.M = molecularWeight
-                self.R = rocket.Motor.R
+                self.R = Rocket.Motor.R
                 self.F = 0
                 self.mDot = 0
                 self.efficiency = efficiency
@@ -267,7 +269,8 @@ class rocket:
                             Min = Me
                         else:
                             Max = Me
-                    
+
+                    Me = (Min + Max) / 2 #not sure about this here...
                     #Calculate Pe/P0 (Exhaust Pressure over Stagnation Pressure)
                     Pr = ((2/(self.k + 1))/(1 + 0.5*(self.k - 1)*Me**2))**(self.k/(self.k - 1))
                     
@@ -275,7 +278,7 @@ class rocket:
                     Ve = np.sqrt(2*self.R*T0*self.k*((1 - (Pr)**((self.k - 1))/self.k))/(self.M*(self.k - 1)))
                     
                     #Calculate the Thrust
-                    self.F = mDot*Ve + (P0*Pr - Patm)*np.pi*self.re**2
+                    self.F = self.mDot*Ve + (P0*Pr - Patm)*np.pi*self.re**2
                 else:
                     pass
         
@@ -295,7 +298,7 @@ class rocket:
                 return
             
             #Set a Default Nozzle Inlet Radius if not Provided
-            if type(inletRadius) == type(None) and type(chamberID) in {int, float, np.int32, np.float64}:
+            if not inletRadius and helper.validateNumber(type(chamberID)):
                 if verbose == True:
                     print('Inlet radius not provided: using chamberID/2')
                 inletRadius = chamberID/2
@@ -303,8 +306,8 @@ class rocket:
             #Check for a Valid Thrust Curve
             if type(thrustCurve) == np.ndarray:
                 self.error = False
-                if np.shape(thrustCurve)[0] != 2:
-                    print('thrustCurve must be a 2 Dimensional array with time steps in row 1 and thrust in row 2')
+                if np.shape(thrustCurve)[0] != 2 and len(np.shape(thrustCurve)) < 10:
+                    print('thrustCurve must be a 2 Dimensional array with time steps in row 1 and thrust in row 2. Thurst data over time should at least be 10 entries.')
                     self.error = True
                     return
                 self.thrustCurve = thrustCurve
@@ -319,27 +322,27 @@ class rocket:
                 self.error = False
                 self.on = True
                 if motorType == 'solid':
-                    self.chamber = rocket.Motor.Chamber(motorType, chamberID, chamberlength, fuelLength, portDiameter, None, verbose)
+                    self.chamber = Rocket.Motor.Chamber(motorType, chamberID, chamberlength, fuelLength, portDiameter, None, verbose)
                     self.error = self.chamber.error
                 elif motorType == 'hybrid':
-                    self.oxTank = rocket.Motor.Tank(oxidizer, oxVolume, oxMass, oxPressure, oxOutletDiameter, oxPressurant, LOxFraction, verbose)
-                    self.chamber = rocket.Motor.Chamber(motorType, chamberID, chamberlength, fuelLength, portDiameter, preCombustionLength, verbose)
+                    self.oxTank = Rocket.Motor.Tank(oxidizer, oxVolume, oxMass, oxPressure, oxOutletDiameter, oxPressurant, LOxFraction, verbose)
+                    self.chamber = Rocket.Motor.Chamber(motorType, chamberID, chamberlength, fuelLength, portDiameter, preCombustionLength, verbose)
                     self.error = (self.oxTank.error == True or self.chamber.error == True)
                 elif motorType == 'liquid':
-                    self.oxTank = rocket.Motor.Tank(oxidizer, oxVolume, oxMass, oxPressure, oxOutletDiameter, oxPressurant, LOxFraction, verbose)
-                    self.fuelTank = rocket.Motor.Tank(fuel, fuelVolume, fuelMass, fuelPressure, fuelOutletDiameter, fuelPressurant, None, verbose)
-                    self.chamber = rocket.Motor.Chamber(motorType, chamberID, chamberlength, None, None, None, verbose)
+                    self.oxTank = Rocket.Motor.Tank(oxidizer, oxVolume, oxMass, oxPressure, oxOutletDiameter, oxPressurant, LOxFraction, verbose)
+                    self.fuelTank = Rocket.Motor.Tank(fuel, fuelVolume, fuelMass, fuelPressure, fuelOutletDiameter, fuelPressurant, None, verbose)
+                    self.chamber = Rocket.Motor.Chamber(motorType, chamberID, chamberlength, None, None, None, verbose)
                     self.error = (self.oxTank.error == True or self.fuelTank.error == True or self.chamber.error == True)
                 else:
                     self.error = True
                 """We should calculate k and M for the exhaust here rather than making the user input it"""
-                self.nozzle = rocket.Motor.Nozzle(nozzleType, inletRadius, throatRadius, areaRatio, outletAngle, exhaustk, exhaustMolecularWeight, efficiency, verbose)
+                self.nozzle = Rocket.Motor.Nozzle(nozzleType, inletRadius, throatRadius, areaRatio, outletAngle, exhaustk, exhaustMolecularWeight, efficiency, verbose)
                 self.error = (self.error or self.nozzle.error)
         
         #Update the Motor
         def updateMotor(self, a, theta, Patm, t, h):
             #Use Linear Interpolation on a Given Thrust Curve
-            if type(self.thrustCurve) != type(None):
+            if np.any(self.thrustCurve):
                 while self.thrustCurve[0][self.index] <= t and self.index < len(self.thrustCurve[0]) - 1:
                     self.index += 1
                 w = (t - self.thrustCurve[0][self.index - 1])/(self.thrustCurve[0][self.index] - self.thrustCurve[0][self.index - 1])
@@ -349,20 +352,20 @@ class rocket:
             
             #Solid Motor Model
             elif self.motorType == 'solid':
-                P0, T0 = self.chamber.updateSolid()
+                P0, T0 = self.chamber.updateSolid(h)
                 return self.nozzle.updateNozzle(P0, T0, Patm)
             
             #Hybrid Motor Model
             elif self.motorType == 'hybrid':
                 ODot = self.oxTank.updateTank(a, theta)
-                P0, T0 = self.chamber.updateHybrid(ODot)
+                P0, T0 = self.chamber.updateHybrid(ODot, h)
                 return self.nozzle.updateNozzle(P0, T0, Patm)
             
             #Liquid Motor Model
             elif self.motorType == 'liquid':
                 ODot = self.oxTank.updateTank(a, theta)
                 FDot = self.fuelTank.updateTank(a, theta)
-                P0, T0 = self.chamber.updateLiquid(ODot, FDot)
+                P0, T0 = self.chamber.updateLiquid(ODot, FDot, h)
                 return self.nozzle.updateNozzle(P0, T0, Patm)
             
             #Error State
@@ -379,20 +382,20 @@ class rocket:
         def updateAirframe(self):
             pass
     
-    #Create a rocket Object
+    #Create a Rocket Object
     def __init__(self, name, h = 0.01, rkOrder = 4, save = True, load = False):
         #Check the Name
         if type(name) != str:
             print('Rocket Name Must be a String')
             return
         
-        #Load Rocket Information
+        #Load Rocket Information (read input config files)
         if load == True:
             pass
         
         #Create the Rocket
-        self.airframe = rocket.Airframe()
-        self.motor = rocket.Motor()
+        self.airframe = Rocket.Airframe()
+        self.motor = Rocket.Motor()
         
         #Attributes for the Rocket's Position. Array indexing corresponds with derivatives
         self.x = np.zeros(rkOrder + 2)
