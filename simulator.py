@@ -14,7 +14,48 @@ to run (eg. vertical fire test), etc.
 # import IPython.display as IPy
 # from math import factorial
 # import helper
+import json
+from pprint import pprint
+import sys
 
-#STEP 1: read, validate, and store values from input JSON config file
+class Simulator:
+    def __init__(self, inputFile):
+    #STEP 1: read, validate, and store values from input JSON config file
+        try:
+            if inputFile:
+                with open(inputFile) as json_file:
+                    json_data = json.load(json_file)
+            else:
+                with open("simulator.json") as json_file:
+                    json_data = json.load(json_file)
 
-#STEP 2: run (instantiate) simulations according to the configs
+            pprint(json_data)                       #pretty-print
+            print(json_data["rocket_specs"])
+
+            #Store variables
+            simulation_runs = int(json_data["simulation_runs"])
+            simulation_type = self.validateSimType(json_data["simulation_type"])
+            simulation_modules = json_data["simulation_modules"]
+            rocket_specs = json_data["rocket_specs"]
+            # print(simulation_runs,simulation_type, simulation_modules, rocket_specs)
+
+        except:
+            print(sys.exc_info())
+
+    #STEP 2: run (instantiate) simulations according to the configs
+
+    #Helper Functions
+
+    def validateSimType(self, type):
+        if type == "fullFlight" or type == "hotFireTest":
+            return type
+        else:
+            print("invalid simulation type. Please choose one from 'fullFlight' and 'hotFireTest'")
+            return None
+
+
+def main():
+    sim = Simulator("simulator.json")
+
+if __name__ == "__main__":
+    main()
